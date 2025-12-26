@@ -35,6 +35,10 @@ func RootHandler(
 	).Methods(http.MethodGet)
 	api.Handle(
 		"/users",
+		http.HandlerFunc(userHandler.GetAll),
+	).Methods(http.MethodGet)
+	api.Handle(
+		"/users",
 		http.HandlerFunc(userHandler.Create),
 	).Methods(http.MethodPost)
 

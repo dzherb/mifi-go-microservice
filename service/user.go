@@ -56,7 +56,7 @@ func (u *UserService) Create(
 	createdUser := user
 	createdUser.ID = u.generateID()
 
-	err := u.storage.Set(ctx, u.buildStorageKey(user.ID), user)
+	err := u.storage.Set(ctx, u.buildStorageKey(createdUser.ID), createdUser)
 	if err != nil {
 		return user, fmt.Errorf("failed to create user: %w", err)
 	}

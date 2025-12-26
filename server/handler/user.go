@@ -54,7 +54,8 @@ type UserResponse model.User
 
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req UserCreateRequest
-	err := json.NewEncoder(w).Encode(req)
+
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		response.Write(
 			w, h.log,
@@ -71,6 +72,8 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !h.validateIncomingUserOrWriteError(w, user) {
+		println("fff")
+
 		return
 	}
 
@@ -81,12 +84,7 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 			slog.String("error", err.Error()),
 		)
 
-		response.Write(
-			w,
-			h.log,
-			response.NewError("something went wrong"),
-			http.StatusInternalServerError,
-		)
+		response.WriteDefaultError(w, h.log)
 
 		return
 	}
@@ -104,6 +102,21 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		UserResponse(created),
 		http.StatusCreated,
 	)
+}
+
+type AllUsersResponse struct {
+	Users []model.User `json:"users"`
+}
+
+func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	users, err := h.service.GetAll(r.Context())
+	if err != nil {
+		response.WriteDefaultError(w, h.log)
+
+		return
+	}
+
+	response.Write(w, h.log, AllUsersResponse{Users: users}, http.StatusOK)
 }
 
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
@@ -133,11 +146,7 @@ func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		response.Write(
-			w, h.log,
-			response.NewError("something went wrong"),
-			http.StatusInternalServerError,
-		)
+		response.WriteDefaultError(w, h.log)
 
 		return
 	}

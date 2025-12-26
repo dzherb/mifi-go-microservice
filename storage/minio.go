@@ -49,7 +49,7 @@ func NewMiniIO[T any](
 		bucketName: cfg.BucketName,
 	}
 
-	// Создаем bucket если его нет
+	// Create the bucket if it doesn't exist
 	exists, err := minioClient.BucketExists(ctx, cfg.BucketName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check bucket existence: %w", err)
@@ -100,6 +100,29 @@ func (s *MiniIO[T]) Set(ctx context.Context, key string, data T) error {
 	)
 
 	return nil
+}
+
+func (s *MiniIO[T]) GetAll(ctx context.Context) ([]T, error) {
+	objCh := s.client.ListObjects(ctx, s.bucketName, minio.ListObjectsOptions{})
+
+	objects := make([]T, 0)
+
+	for objInfo := range objCh {
+		obj, err := s.Get(ctx, objInfo.Key)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to fetch object %s: %w",
+				objInfo.Key,
+				err,
+			)
+		}
+
+		println("KEY", objInfo.Key)
+
+		objects = append(objects, obj)
+	}
+
+	return objects, nil
 }
 
 func (s *MiniIO[T]) Get(ctx context.Context, key string) (T, error) {

@@ -25,3 +25,11 @@ func Write(w http.ResponseWriter, log *slog.Logger, obj any, status int) {
 		}
 	}
 }
+
+func WriteDefaultError(w http.ResponseWriter, log *slog.Logger) {
+	Write(
+		w, log,
+		NewError("something went wrong"),
+		http.StatusInternalServerError,
+	)
+}
