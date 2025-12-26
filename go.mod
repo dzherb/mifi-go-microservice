@@ -2,13 +2,16 @@ module github.com/dzherb/mifi-go-microservice
 
 go 1.25.4
 
-require github.com/minio/minio-go/v7 v7.0.97
+require (
+	github.com/google/uuid v1.6.0
+	github.com/gorilla/mux v1.8.1
+	github.com/minio/minio-go/v7 v7.0.97
+)
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.11 // indirect
 	github.com/klauspost/crc32 v1.3.0 // indirect
