@@ -1,4 +1,18 @@
-FROM ubuntu:latest
-LABEL authors="dzherb"
+FROM golang:1.25-alpine AS builder
 
-ENTRYPOINT ["top", "-b"]
+WORKDIR /app
+
+COPY go.mod ./
+RUN go mod download
+
+COPY . .
+
+RUN go build -o main ./cmd/main.go
+
+FROM alpine:latest
+
+WORKDIR /root/
+
+COPY --from=builder /app/main .
+
+CMD ["./main"]
