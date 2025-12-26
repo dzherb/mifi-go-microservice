@@ -61,10 +61,11 @@ func RootHandler(
 	).Methods(http.MethodPost)
 
 	api.Use(middleware.CollectRequestsMetrics)
-	api.Use(middleware.RateLimitMiddleware(
-		float64(cfg.MaxRequestsPerSecond),
-		cfg.MaxBurst,
-	),
+	api.Use(
+		middleware.RateLimitMiddleware(
+			float64(cfg.MaxRequestsPerSecond),
+			cfg.MaxBurst,
+		),
 	)
 
 	return r

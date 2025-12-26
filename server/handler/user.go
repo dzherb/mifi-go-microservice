@@ -286,6 +286,8 @@ func (h *UserHandler) validateIncomingUserOrWriteError(
 			},
 			http.StatusBadRequest,
 		)
+
+		return
 	}
 
 	return true
