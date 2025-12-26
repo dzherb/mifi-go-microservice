@@ -10,13 +10,20 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/dzherb/mifi-go-microservice/server/handler"
+	"github.com/dzherb/mifi-go-microservice/server/middleware"
 	"github.com/dzherb/mifi-go-microservice/service"
 )
+
+type APIConfig struct {
+	MaxRequestsPerSecond int
+	MaxBurst             int
+}
 
 func RootHandler(
 	log *slog.Logger,
 	userService *service.UserService,
 	notifier *service.Notifier,
+	cfg *APIConfig,
 ) http.Handler {
 	r := mux.NewRouter()
 
@@ -41,6 +48,11 @@ func RootHandler(
 		"/users",
 		http.HandlerFunc(userHandler.Create),
 	).Methods(http.MethodPost)
+
+	api.Use(middleware.RateLimitMiddleware(
+		float64(cfg.MaxRequestsPerSecond),
+		cfg.MaxBurst),
+	)
 
 	return api
 }

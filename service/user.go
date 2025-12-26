@@ -88,7 +88,6 @@ func (u *UserService) GetAll(ctx context.Context) ([]model.User, error) {
 
 	users, err := u.storage.GetAll(ctx)
 	if err != nil {
-
 		return nil, fmt.Errorf("failed to get users: %w", err)
 	}
 
@@ -105,7 +104,6 @@ func (u *UserService) Update(ctx context.Context, user model.User) error {
 	}
 
 	err := u.storage.Set(ctx, u.buildStorageKey(user.ID), user)
-
 	if err != nil {
 		return fmt.Errorf("failed to update user: %w", err)
 	}
@@ -118,7 +116,6 @@ func (u *UserService) Delete(ctx context.Context, id string) error {
 	defer cancel()
 
 	err := u.storage.Delete(ctx, u.buildStorageKey(id))
-
 	if err != nil {
 		return fmt.Errorf("failed to delete user: %w", err)
 	}

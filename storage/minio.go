@@ -117,8 +117,6 @@ func (s *MiniIO[T]) GetAll(ctx context.Context) ([]T, error) {
 			)
 		}
 
-		println("KEY", objInfo.Key)
-
 		objects = append(objects, obj)
 	}
 
@@ -166,7 +164,6 @@ func (s *MiniIO[T]) Delete(ctx context.Context, key string) error {
 		key,
 		minio.RemoveObjectOptions{},
 	)
-
 	if err != nil {
 		return fmt.Errorf("failed to remove s3 object: %w", err)
 	}

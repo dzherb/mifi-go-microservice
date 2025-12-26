@@ -30,6 +30,7 @@ func (n *Notifier) Send(msg string, extra map[string]any) {
 			"error marshaling notification",
 			slog.String("error", err.Error()),
 		)
+
 		return
 	}
 

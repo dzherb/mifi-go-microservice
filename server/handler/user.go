@@ -72,8 +72,6 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !h.validateIncomingUserOrWriteError(w, user) {
-		println("fff")
-
 		return
 	}
 
@@ -121,7 +119,7 @@ func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	userID, _ := vars["id"]
+	userID := vars["id"]
 
 	_, err := uuid.Parse(userID)
 	if err != nil {

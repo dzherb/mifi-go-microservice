@@ -40,7 +40,6 @@ func main() {
 			UseSSL:     envOrDefault("MINIO_USE_SSL", "false") == "true",
 		},
 	)
-
 	if err != nil {
 		panic("user storage initialization: " + err.Error())
 	}
@@ -49,7 +48,18 @@ func main() {
 	notifier := service.NewNotifier(log)
 
 	srv := server.New(
-		server.RootHandler(log, userService, notifier),
+		server.RootHandler(
+			log,
+			userService,
+			notifier,
+			&server.APIConfig{
+				MaxRequestsPerSecond: intEnvOrDefault(
+					"API_MAX_REQUESTS_PER_SECOND",
+					1000,
+				),
+				MaxBurst: intEnvOrDefault("API_MAX_BURST", 1000),
+			},
+		),
 		server.Config{
 			Port: intEnvOrDefault("SERVER_PORT", 8080),
 			ReadHeaderTimeout: time.Duration(
@@ -108,6 +118,7 @@ func envOrDefault(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
 	}
+
 	return defaultValue
 }
 
