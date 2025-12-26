@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"net/mail"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -118,17 +119,8 @@ func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	userID := vars["id"]
-
-	_, err := uuid.Parse(userID)
-	if err != nil {
-		response.Write(
-			w, h.log,
-			response.NewError("invalid user ID"),
-			http.StatusBadRequest,
-		)
-
+	userID, ok := h.getUserIDParamOrWriteError(w, r)
+	if !ok {
 		return
 	}
 
@@ -156,17 +148,112 @@ func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
+type UserUpdateRequest struct {
+	UserCreateRequest
+}
+
+type UserUpdateResponse model.User
+
+func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.getUserIDParamOrWriteError(w, r)
+	if !ok {
+		return
+	}
+
+	var req UserUpdateRequest
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		response.Write(
+			w, h.log,
+			response.NewError(err.Error()),
+			http.StatusUnprocessableEntity,
+		)
+
+		return
+	}
+
+	user := model.User{
+		ID:    userID,
+		Name:  req.Name,
+		Email: req.Email,
+	}
+
+	if !h.validateIncomingUserOrWriteError(w, user) {
+		return
+	}
+
+	err = h.service.Update(r.Context(), user)
+	if err != nil {
+		if errors.Is(err, service.ErrUserDoesNotExist) {
+			response.Write(
+				w, h.log,
+				response.NewError(service.ErrUserDoesNotExist.Error()),
+				http.StatusNotFound,
+			)
+
+			return
+		}
+
+		response.WriteDefaultError(w, h.log)
+
+		return
+	}
+
+	response.Write(
+		w, h.log,
+		UserUpdateResponse(user),
+		http.StatusOK,
+	)
+}
+
+func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	userID, ok := h.getUserIDParamOrWriteError(w, r)
+	if !ok {
+		return
+	}
+
+	err := h.service.Delete(r.Context(), userID)
+	if err != nil {
+		response.WriteDefaultError(w, h.log)
+
+		return
+	}
+
+	response.Write(w, h.log, nil, http.StatusNoContent)
+}
+
 type UserValidationFailedResponse struct {
 	Field   string `json:"field"`
 	Message string `json:"message"`
+}
+
+func (h *UserHandler) getUserIDParamOrWriteError(
+	w http.ResponseWriter,
+	r *http.Request,
+) (string, bool) {
+	vars := mux.Vars(r)
+	userID := vars["id"]
+
+	_, err := uuid.Parse(userID)
+	if err != nil {
+		response.Write(
+			w, h.log,
+			response.NewError("invalid user ID"),
+			http.StatusBadRequest,
+		)
+
+		return "", false
+	}
+
+	return userID, true
 }
 
 func (h *UserHandler) validateIncomingUserOrWriteError(
 	w http.ResponseWriter,
 	user model.User,
 ) (ok bool) {
-	switch {
-	case user.Name == "":
+	if user.Name == "" {
 		response.Write(
 			w, h.log,
 			UserValidationFailedResponse{
@@ -177,7 +264,9 @@ func (h *UserHandler) validateIncomingUserOrWriteError(
 		)
 
 		return
-	case user.Email == "": // todo add more complex validation
+	}
+
+	if user.Email == "" {
 		response.Write(
 			w, h.log,
 			UserValidationFailedResponse{
@@ -186,8 +275,17 @@ func (h *UserHandler) validateIncomingUserOrWriteError(
 			},
 			http.StatusBadRequest,
 		)
+	}
 
-		return
+	if _, err := mail.ParseAddress(user.Email); err != nil {
+		response.Write(
+			w, h.log,
+			UserValidationFailedResponse{
+				Field:   "email",
+				Message: "email not valid: " + err.Error(),
+			},
+			http.StatusBadRequest,
+		)
 	}
 
 	return true

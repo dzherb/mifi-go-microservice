@@ -44,6 +44,14 @@ func RootHandler(
 		http.HandlerFunc(userHandler.Get),
 	).Methods(http.MethodGet)
 	api.Handle(
+		"/users/{id}",
+		http.HandlerFunc(userHandler.Update),
+	).Methods(http.MethodPut)
+	api.Handle(
+		"/users/{id}",
+		http.HandlerFunc(userHandler.Delete),
+	).Methods(http.MethodDelete)
+	api.Handle(
 		"/users",
 		http.HandlerFunc(userHandler.GetAll),
 	).Methods(http.MethodGet)

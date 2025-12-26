@@ -103,7 +103,16 @@ func (u *UserService) Update(ctx context.Context, user model.User) error {
 		return ErrMissingUserID
 	}
 
-	err := u.storage.Set(ctx, u.buildStorageKey(user.ID), user)
+	_, err := u.Get(ctx, user.ID)
+	if err != nil {
+		if errors.Is(err, storage.ErrKeyNotFound) {
+			return ErrUserDoesNotExist
+		}
+
+		return fmt.Errorf("failed to check if user exists: %w", err)
+	}
+
+	err = u.storage.Set(ctx, u.buildStorageKey(user.ID), user)
 	if err != nil {
 		return fmt.Errorf("failed to update user: %w", err)
 	}
