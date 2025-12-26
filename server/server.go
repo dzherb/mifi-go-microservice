@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/dzherb/mifi-go-microservice/server/handler"
 	"github.com/dzherb/mifi-go-microservice/server/middleware"
@@ -26,6 +27,8 @@ func RootHandler(
 	cfg *APIConfig,
 ) http.Handler {
 	r := mux.NewRouter()
+
+	r.Handle("/metrics", promhttp.Handler()).Methods(http.MethodGet)
 
 	api := r.PathPrefix("/api").Subrouter()
 
@@ -49,12 +52,14 @@ func RootHandler(
 		http.HandlerFunc(userHandler.Create),
 	).Methods(http.MethodPost)
 
+	api.Use(middleware.CollectRequestsMetrics)
 	api.Use(middleware.RateLimitMiddleware(
 		float64(cfg.MaxRequestsPerSecond),
-		cfg.MaxBurst),
+		cfg.MaxBurst,
+	),
 	)
 
-	return api
+	return r
 }
 
 type Config struct {

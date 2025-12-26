@@ -7,6 +7,7 @@ import (
 
 func New(levelName string) *slog.Logger {
 	var lvl slog.Level
+
 	err := lvl.UnmarshalText([]byte(levelName))
 	if err != nil {
 		panic("parse log level: " + err.Error())
