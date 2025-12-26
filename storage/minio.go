@@ -4,11 +4,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+)
+
+var (
+	ErrKeyNotFound = errors.New("key not found")
 )
 
 type MiniIO[T any] struct {
@@ -119,6 +124,12 @@ func (s *MiniIO[T]) Get(ctx context.Context, key string) (T, error) {
 
 	err = json.NewDecoder(object).Decode(&res)
 	if err != nil {
+		var minioErr minio.ErrorResponse
+
+		if errors.As(err, &minioErr) && minioErr.Code == minio.NoSuchKey {
+			return res, ErrKeyNotFound
+		}
+
 		return res, fmt.Errorf("failed to unmarshal s3 object: %w", err)
 	}
 
